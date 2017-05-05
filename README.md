@@ -4,7 +4,19 @@ ClockView
 <b>Image</b>
 
 ![alt tag](https://github.com/piyush-malaviya/ClockView/blob/master/screenshot/screen_1.png)
+![alt tag](https://github.com/piyush-malaviya/ClockView/blob/master/screenshot/screen_2.png)
 
+
+### Add view in layout
+```
+<com.pcm.clockviewlib.ClockView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_margin="16dp"
+        app:clock_face="digital_face" />
+```
+        
 
 <H2>License</H2>
 
