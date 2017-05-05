@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ClockView">
+        <attr name="second_hand_color" format="reference" />
+        <attr name="minute_hand_color" format="reference" />
+        <attr name="hour_hand_color" format="reference" />
+        <attr name="clock_face_color" format="reference" />
+        <attr name="clock_face" format="enum">
+            <enum name="default_face" value="0">Default</enum>
+            <enum name="digital_face" value="1">Digital Face</enum>
+        </attr>
+    </declare-styleable>
+
+</resources>

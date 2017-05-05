@@ -1,6 +1,7 @@
-package com.pcm.clockview;
+package com.pcm.clockviewlib;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -13,10 +14,15 @@ import java.util.Calendar;
 
 public class ClockView extends View {
     private static final int START_ANGLE = -90;
-    private Paint paint;
-    private int second;
-    private int minute;
-    private int hour;
+    private Paint mPaint;
+    private int mSecond;
+    private int mMinute;
+    private int mHour;
+    private int mSecondHandColor = Color.parseColor("#2E7D32");
+    private int mMinuteHandColor = Color.parseColor("#EF6C00");
+    private int mHourHandColor = Color.parseColor("#F44336");
+    private int mClockFaceColor = Color.parseColor("#1565C0");
+    private int mClockFace = 1;
 
     public ClockView(Context context) {
         this(context, null);
@@ -28,34 +34,48 @@ public class ClockView extends View {
 
     public ClockView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ClockView);
+
+        mSecondHandColor = typedArray.getColor(R.styleable.ClockView_second_hand_color, mSecondHandColor);
+        mMinuteHandColor = typedArray.getColor(R.styleable.ClockView_minute_hand_color, mMinuteHandColor);
+        mHourHandColor = typedArray.getColor(R.styleable.ClockView_hour_hand_color, mHourHandColor);
+        mClockFaceColor = typedArray.getColor(R.styleable.ClockView_clock_face_color, mClockFaceColor);
+        mClockFace = typedArray.getInt(R.styleable.ClockView_clock_face, 1);
+
+        typedArray.recycle();
         init();
+        setClockTime(Calendar.getInstance().getTimeInMillis());
+    }
+
+    public void setClockTime(long timeInMillis) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(timeInMillis);
+        mSecond = calendar.get(Calendar.SECOND) * 6;
+        mMinute = calendar.get(Calendar.MINUTE) * 6;
+        mHour = calendar.get(Calendar.HOUR) * 30 + (mMinute / 24);
     }
 
     private void init() {
-        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setColor(Color.RED);
-        paint.setStrokeWidth(2);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeCap(Paint.Cap.ROUND);
-
-        second = Calendar.getInstance().get(Calendar.SECOND) * 6;
-        minute = Calendar.getInstance().get(Calendar.MINUTE) * 6;
-        hour = Calendar.getInstance().get(Calendar.HOUR) * 30 + (minute / 24);
+        mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaint.setColor(Color.RED);
+        mPaint.setStrokeWidth(2);
+        mPaint.setStyle(Paint.Style.STROKE);
+        mPaint.setStrokeCap(Paint.Cap.ROUND);
 
         final Handler handler = new Handler();
         handler.post(new Runnable() {
             @Override
             public void run() {
                 // one min have 60 sec so 360/60=6
-                //second = (second + 6) % 360;
-                second += 6;
-                if (second >= 360) {
-                    minute += 6;
-                    hour += 1;
-                    second = 0;
+                //mSecond = (mSecond + 6) % 360;
+                mSecond += 6;
+                if (mSecond >= 360) {
+                    mMinute += 6;
+                    mHour += 1;
+                    mSecond = 0;
                 }
-                if (minute >= 360) {
-                    minute = 0;
+                if (mMinute >= 360) {
+                    mMinute = 0;
                 }
                 invalidate();
                 handler.postDelayed(this, 1000);
@@ -76,75 +96,79 @@ public class ClockView extends View {
         super.onDraw(canvas);
         int center = getWidth() / 2;
         float radius = center / 1.25f;
-        paint.setColor(Color.parseColor("#1565C0"));
-        canvas.drawCircle(center, center, radius, paint);
-        canvas.drawCircle(center, center, 6, paint);
+        mPaint.setColor(mClockFaceColor);
+        canvas.drawCircle(center, center, radius, mPaint);
+        canvas.drawCircle(center, center, 6, mPaint);
 
-        //drawNumber(canvas);
-        drawDialer(canvas);
+        drawClockFace(canvas);
         drawHoursLine(canvas);
         drawMinuteLine(canvas);
         drawSecondLine(canvas);
     }
 
+    private void drawClockFace(Canvas canvas) {
+        if (mClockFace == 1) {
+            drawDigitalFace(canvas);
+        } else {
+            drawNormalFace(canvas);
+        }
+    }
+
     private void drawSecondLine(Canvas canvas) {
         int center = getWidth() / 2;
-        float angle = (float) (START_ANGLE + second + (Math.PI / 180)); // Need to convert to radians first
+        float angle = (float) (START_ANGLE + mSecond + (Math.PI / 180)); // Need to convert to radians first
         double radians = Math.toRadians(angle);
         float radius = center / 1.5f;
         float startX = (float) (center + radius * Math.cos(radians));
         float startY = (float) (center + radius * Math.sin(radians));
-        paint.setColor(Color.parseColor("#2E7D32"));
-        paint.setStrokeWidth(2);
-        canvas.drawLine(startX, startY, center, center, paint);
+        mPaint.setColor(mSecondHandColor);
+        mPaint.setStrokeWidth(2);
+        canvas.drawLine(startX, startY, center, center, mPaint);
     }
 
     private void drawMinuteLine(Canvas canvas) {
         int center = getWidth() / 2;
-        float angle = (float) (START_ANGLE + minute + (Math.PI / 180)); // Need to convert to radians first
+        float angle = (float) (START_ANGLE + mMinute + (Math.PI / 180)); // Need to convert to radians first
         double radians = Math.toRadians(angle);
         float radius = center / 1.75f;
         float startX = (float) (center + radius * Math.cos(radians));
         float startY = (float) (center + radius * Math.sin(radians));
-        paint.setColor(Color.parseColor("#EF6C00"));
-        paint.setStrokeWidth(4);
-        canvas.drawLine(startX, startY, center, center, paint);
-        canvas.drawCircle(startX, startY, 4, paint);
+        mPaint.setColor(mMinuteHandColor);
+        mPaint.setStrokeWidth(4);
+        canvas.drawLine(startX, startY, center, center, mPaint);
+        canvas.drawCircle(startX, startY, 4, mPaint);
     }
 
     private void drawHoursLine(Canvas canvas) {
         int center = getWidth() / 2;
-        float angle = (float) (START_ANGLE + hour + (Math.PI / 180)); // Need to convert to radians first
+        float angle = (float) (START_ANGLE + mHour + (Math.PI / 180)); // Need to convert to radians first
         double radians = Math.toRadians(angle);
         float radius = center / 2f;
         float startX = (float) (center + radius * Math.cos(radians));
         float startY = (float) (center + radius * Math.sin(radians));
-        paint.setColor(Color.parseColor("#F44336"));
-        paint.setStrokeWidth(6);
-        canvas.drawLine(startX, startY, center, center, paint);
-        canvas.drawCircle(startX, startY, 4, paint);
+        mPaint.setColor(mHourHandColor);
+        mPaint.setStrokeWidth(6);
+        canvas.drawLine(startX, startY, center, center, mPaint);
+        canvas.drawCircle(startX, startY, 4, mPaint);
     }
 
-    private void drawNumber(Canvas canvas) {
+    private void drawDigitalFace(Canvas canvas) {
         int center = getWidth() / 2;
 
         for (int index = 1; index <= 12; index++) {
-
             float angle = (float) (START_ANGLE + (index * 30) + (Math.PI / 180)); // Need to convert to radians first
             double radians = Math.toRadians(angle);
             float radius = center / 1.5f;
             float startX = (float) (center + radius * Math.cos(radians));
             float startY = (float) (center + radius * Math.sin(radians));
-            paint.setColor(Color.parseColor("#2E7D32"));
-            //paint.setStrokeWidth(2);
-            //canvas.drawLine(startX, startY, center, center, paint);
-            paint.setTextSize(36);
-            paint.setTextAlign(Paint.Align.CENTER);
-            canvas.drawText(String.valueOf(index), startX, startY, paint);
+            mPaint.setColor(mClockFaceColor);
+            mPaint.setTextSize(36);
+            mPaint.setTextAlign(Paint.Align.CENTER);
+            canvas.drawText(String.valueOf(index), startX, startY, mPaint);
         }
     }
 
-    private void drawDialer(Canvas canvas) {
+    private void drawNormalFace(Canvas canvas) {
         int center = getWidth() / 2;
 
         for (int index = 1; index <= 60; index++) {
@@ -157,16 +181,15 @@ public class ClockView extends View {
             float startY1 = (float) (center + center / 1.35f * Math.sin(radians));
             float startX2 = (float) (center + center / 1.3f * Math.cos(radians));
             float startY2 = (float) (center + center / 1.3f * Math.sin(radians));
-            paint.setColor(Color.parseColor("#2E7D32"));
-            paint.setStrokeWidth(2);
+            mPaint.setColor(mClockFaceColor);
+            mPaint.setStrokeWidth(2);
             if (index % 5 == 0) {
-                canvas.drawCircle(startX, startY, 4, paint);
-                canvas.drawCircle(startX2, startY2, 4, paint);
-                canvas.drawCircle(startX1, startY1, 4, paint);
+                canvas.drawCircle(startX, startY, 4, mPaint);
+                canvas.drawCircle(startX2, startY2, 4, mPaint);
+                canvas.drawCircle(startX1, startY1, 4, mPaint);
             } else {
-                canvas.drawCircle(startX1, startY1, 2, paint);
+                canvas.drawCircle(startX1, startY1, 2, mPaint);
             }
-            //canvas.drawLine(startX, startY, startX + 10, startY + 10, paint);
         }
     }
 }
