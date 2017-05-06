@@ -109,9 +109,26 @@ public class ClockView extends View {
 
     private void drawTimeOnCanvas(Canvas canvas) {
         int center = getWidth() / 2;
-        canvas.drawText(Calendar.getInstance().get(Calendar.HOUR_OF_DAY) + ":" +
-                Calendar.getInstance().get(Calendar.MINUTE) + ":" +
-                Calendar.getInstance().get(Calendar.SECOND), center, center + 60, mPaint);
+        String hour= String.valueOf(Calendar.getInstance().get(Calendar.HOUR_OF_DAY));
+        String minute=String.valueOf(Calendar.getInstance().get(Calendar.MINUTE));
+        String sec=String.valueOf(Calendar.getInstance().get(Calendar.SECOND));
+
+        if(Integer.parseInt(hour)<10)
+        {
+            hour="0"+hour;
+        }
+        if(Integer.parseInt(minute)<10)
+        {
+            minute="0"+minute;
+        }
+        if(Integer.parseInt(sec)<10)
+        {
+            sec="0"+sec;
+        }
+
+        canvas.drawText(hour + ":" +
+                minute + ":" +
+                sec, center, center + 60, mPaint);
     }
 
     private void drawClockFace(Canvas canvas) {
