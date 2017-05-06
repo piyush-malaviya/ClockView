@@ -100,10 +100,18 @@ public class ClockView extends View {
         canvas.drawCircle(center, center, radius, mPaint);
         canvas.drawCircle(center, center, 6, mPaint);
 
+        drawTimeOnCanvas(canvas);
         drawClockFace(canvas);
         drawHoursLine(canvas);
         drawMinuteLine(canvas);
         drawSecondLine(canvas);
+    }
+
+    private void drawTimeOnCanvas(Canvas canvas) {
+        int center = getWidth() / 2;
+        canvas.drawText(Calendar.getInstance().get(Calendar.HOUR_OF_DAY) + ":" +
+                Calendar.getInstance().get(Calendar.MINUTE) + ":" +
+                Calendar.getInstance().get(Calendar.SECOND), center, center + 60, mPaint);
     }
 
     private void drawClockFace(Canvas canvas) {
