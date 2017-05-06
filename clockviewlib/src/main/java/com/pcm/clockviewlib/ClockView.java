@@ -100,15 +100,42 @@ public class ClockView extends View {
         canvas.drawCircle(center, center, radius, mPaint);
         canvas.drawCircle(center, center, 6, mPaint);
 
+        drawTimeOnCanvas(canvas);
         drawClockFace(canvas);
         drawHoursLine(canvas);
         drawMinuteLine(canvas);
         drawSecondLine(canvas);
     }
 
+    private void drawTimeOnCanvas(Canvas canvas) {
+        int center = getWidth() / 2;
+        String hour= String.valueOf(Calendar.getInstance().get(Calendar.HOUR_OF_DAY));
+        String minute=String.valueOf(Calendar.getInstance().get(Calendar.MINUTE));
+        String sec=String.valueOf(Calendar.getInstance().get(Calendar.SECOND));
+
+        if(Integer.parseInt(hour)<10)
+        {
+            hour="0"+hour;
+        }
+        if(Integer.parseInt(minute)<10)
+        {
+            minute="0"+minute;
+        }
+        if(Integer.parseInt(sec)<10)
+        {
+            sec="0"+sec;
+        }
+
+        canvas.drawText(hour + ":" +
+                minute + ":" +
+                sec, center, center + 60, mPaint);
+    }
+
     private void drawClockFace(Canvas canvas) {
         if (mClockFace == 1) {
             drawDigitalFace(canvas);
+        } else if (mClockFace == 2) {
+            drawRomanClockFace(canvas);
         } else {
             drawNormalFace(canvas);
         }
@@ -165,6 +192,27 @@ public class ClockView extends View {
             mPaint.setTextSize(36);
             mPaint.setTextAlign(Paint.Align.CENTER);
             canvas.drawText(String.valueOf(index), startX, startY, mPaint);
+        }
+    }
+
+    /**
+     * If user wants roman clock
+     *
+     * @param canvas : view can canvas
+     */
+    private void drawRomanClockFace(Canvas canvas) {
+        int center = getWidth() / 2;
+        String[] strings = new String[]{"XII", "I", "II", "III", "IIII", "V", "VI", "VII", "VIII", "IX", "X", "XI"};
+        for (int index = 0; index < 12; index++) {
+            float angle = (float) (START_ANGLE + (index * 30) + (Math.PI / 180)); // Need to convert to radians first
+            double radians = Math.toRadians(angle);
+            float radius = center / 1.5f;
+            float startX = (float) (center + radius * Math.cos(radians));
+            float startY = (float) (center + radius * Math.sin(radians));
+            mPaint.setColor(mClockFaceColor);
+            mPaint.setTextSize(36);
+            mPaint.setTextAlign(Paint.Align.CENTER);
+            canvas.drawText(strings[index], startX, startY, mPaint);
         }
     }
 
