@@ -8,6 +8,7 @@
         <attr name="clock_face" format="enum">
             <enum name="default_face" value="0">Default</enum>
             <enum name="digital_face" value="1">Digital Face</enum>
+            <enum name="roman_face" value="2">Roman Clock Face</enum>
         </attr>
     </declare-styleable>
 
