@@ -179,12 +179,13 @@ public class ClockView extends View {
     }
 
     /**
-     *  If user wants roman clock
+     * If user wants roman clock
+     *
      * @param canvas : view can canvas
      */
     private void drawRomanClockFace(Canvas canvas) {
         int center = getWidth() / 2;
-        String[] strings = new String[]{"I", "II", "III", "IIII", "V", "VI", "VII","VIII","IX","X","XI","XII"};
+        String[] strings = new String[]{"XII", "I", "II", "III", "IIII", "V", "VI", "VII", "VIII", "IX", "X", "XI"};
         for (int index = 0; index < 12; index++) {
             float angle = (float) (START_ANGLE + (index * 30) + (Math.PI / 180)); // Need to convert to radians first
             double radians = Math.toRadians(angle);
