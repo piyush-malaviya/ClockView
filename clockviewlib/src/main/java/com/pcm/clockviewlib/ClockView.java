@@ -2,9 +2,16 @@ package com.pcm.clockviewlib;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Xfermode;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -22,7 +29,12 @@ public class ClockView extends View {
     private int mMinuteHandColor = Color.parseColor("#EF6C00");
     private int mHourHandColor = Color.parseColor("#F44336");
     private int mClockFaceColor = Color.parseColor("#1565C0");
+    private int mClockFaceBackgroundId = -1;
+    private Bitmap mClockFaceBackgroundBitmap;
+    private boolean isDigitalTimeShow;
     private int mClockFace = 1;
+    private Xfermode mClockBackGroundMask;
+    private Xfermode mResetMask;
 
     public ClockView(Context context) {
         this(context, null);
@@ -41,7 +53,15 @@ public class ClockView extends View {
         mHourHandColor = typedArray.getColor(R.styleable.ClockView_hour_hand_color, mHourHandColor);
         mClockFaceColor = typedArray.getColor(R.styleable.ClockView_clock_face_color, mClockFaceColor);
         mClockFace = typedArray.getInt(R.styleable.ClockView_clock_face, 1);
+        mClockFaceBackgroundId = typedArray.getResourceId(R.styleable.ClockView_clock_face_background, -1);
 
+        int showDigitalTime = typedArray.getInt(R.styleable.ClockView_show_digital_time, 1);
+        if (showDigitalTime <= 0) {
+            isDigitalTimeShow = false;
+        } else {
+            isDigitalTimeShow = true;
+        }
+        mClockBackGroundMask = new PorterDuffXfermode(PorterDuff.Mode.SRC_IN);
         typedArray.recycle();
         init();
         setClockTime(Calendar.getInstance().getTimeInMillis());
@@ -61,6 +81,10 @@ public class ClockView extends View {
         mPaint.setStrokeWidth(2);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
+
+        if (mClockFaceBackgroundId != -1) {
+            mClockFaceBackgroundBitmap = BitmapFactory.decodeResource(getResources(), mClockFaceBackgroundId);
+        }
 
         final Handler handler = new Handler();
         handler.post(new Runnable() {
@@ -91,17 +115,37 @@ public class ClockView extends View {
         super.onMeasure(MeasureSpec.makeMeasureSpec(squareSize, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(squareSize, MeasureSpec.EXACTLY));
     }
 
+    private Bitmap getCircleBitmap(Bitmap bitmap) {
+        final Bitmap result = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        final Canvas canvas = new Canvas(result);
+
+        final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        final RectF rectF = new RectF(rect);
+        canvas.drawOval(rectF, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+        return result;
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
         int center = getWidth() / 2;
         float radius = center / 1.25f;
         mPaint.setColor(mClockFaceColor);
+
+        if (mClockFaceBackgroundBitmap != null) {
+            int left = (getWidth() - mClockFaceBackgroundBitmap.getWidth()) / 2;
+            int top = (getHeight() - mClockFaceBackgroundBitmap.getHeight()) / 2;
+            canvas.drawBitmap(getCircleBitmap(mClockFaceBackgroundBitmap), left, top, mPaint);
+        }
         canvas.drawCircle(center, center, radius, mPaint);
         canvas.drawCircle(center, center, 6, mPaint);
 
-        drawTimeOnCanvas(canvas);
         drawClockFace(canvas);
+        drawTimeOnCanvas(canvas);
         drawHoursLine(canvas);
         drawMinuteLine(canvas);
         drawSecondLine(canvas);
@@ -109,29 +153,31 @@ public class ClockView extends View {
 
     private void drawTimeOnCanvas(Canvas canvas) {
         int center = getWidth() / 2;
-        String hour= String.valueOf(Calendar.getInstance().get(Calendar.HOUR_OF_DAY));
-        String minute=String.valueOf(Calendar.getInstance().get(Calendar.MINUTE));
-        String sec=String.valueOf(Calendar.getInstance().get(Calendar.SECOND));
+        String hour = String.valueOf(Calendar.getInstance().get(Calendar.HOUR_OF_DAY));
+        String minute = String.valueOf(Calendar.getInstance().get(Calendar.MINUTE));
+        String sec = String.valueOf(Calendar.getInstance().get(Calendar.SECOND));
 
-        if(Integer.parseInt(hour)<10)
-        {
-            hour="0"+hour;
+        if (Integer.parseInt(hour) < 10) {
+            hour = "0" + hour;
         }
-        if(Integer.parseInt(minute)<10)
-        {
-            minute="0"+minute;
+        if (Integer.parseInt(minute) < 10) {
+            minute = "0" + minute;
         }
-        if(Integer.parseInt(sec)<10)
-        {
-            sec="0"+sec;
+        if (Integer.parseInt(sec) < 10) {
+            sec = "0" + sec;
         }
 
-        canvas.drawText(hour + ":" +
-                minute + ":" +
-                sec, center, center + 60, mPaint);
+        if (isDigitalTimeShow) {
+            mPaint.setTextAlign(Paint.Align.CENTER);
+            mPaint.setTextSize(36);
+            canvas.drawText(hour + ":" +
+                    minute + ":" +
+                    sec, center, center + 60, mPaint);
+        }
     }
 
     private void drawClockFace(Canvas canvas) {
+
         if (mClockFace == 1) {
             drawDigitalFace(canvas);
         } else if (mClockFace == 2) {
@@ -202,7 +248,7 @@ public class ClockView extends View {
      */
     private void drawRomanClockFace(Canvas canvas) {
         int center = getWidth() / 2;
-        String[] strings = new String[]{"XII", "I", "II", "III", "IIII", "V", "VI", "VII", "VIII", "IX", "X", "XI"};
+        String[] strings = new String[]{"XII", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI"};
         for (int index = 0; index < 12; index++) {
             float angle = (float) (START_ANGLE + (index * 30) + (Math.PI / 180)); // Need to convert to radians first
             double radians = Math.toRadians(angle);
